@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Robux ↔ USD Converter</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4efe2;--surface:#fffdf8;--ink:#15281f;--muted:#5f7167;--line:#e2d9c3;--accent:#9c7a2e;--accent2:#b8943f;--accent-ink:#fffdf8;--glow:rgba(156,122,46,.22);--flake:rgba(156,122,46,.3);--shadow:rgba(40,50,35,.22);
+--serif:"Trebuchet MS","Segoe UI",system-ui,sans-serif;--sans:"Trebuchet MS","Segoe UI",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#07160f;--surface:#0c2119;--ink:#f3eddc;--muted:#a3b5aa;--line:#1f3d31;--accent:#d8b96d;--accent2:#e8d094;--accent-ink:#07160f;--glow:rgba(216,185,109,.25);--flake:rgba(243,237,220,.4);--shadow:rgba(0,0,0,.55);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#07160f;--surface:#0c2119;--ink:#f3eddc;--muted:#a3b5aa;--line:#1f3d31;--accent:#d8b96d;--accent2:#e8d094;--accent-ink:#07160f;--glow:rgba(216,185,109,.25);--flake:rgba(243,237,220,.4);--shadow:rgba(0,0,0,.55);color-scheme:dark}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.55 var(--sans);-webkit-font-smoothing:antialiased;transition:background .4s ease}
+main{position:relative;z-index:1;max-width:560px;margin:0 auto;padding:18px 16px 40px}
+h1{font:700 2.2rem/1.1 var(--serif);margin:6px 0 4px;letter-spacing:.005em}
+p.lede{margin:0;color:var(--muted)}
+.orn{display:flex;align-items:center;gap:12px;margin:12px 0 16px;color:var(--accent)}
+.orn::before,.orn::after{content:"";flex:1;height:1px;opacity:.65}
+.orn::before{background:linear-gradient(90deg,transparent,var(--accent))}
+.orn::after{background:linear-gradient(270deg,transparent,var(--accent))}
+.orn span{font-size:.8rem;line-height:1}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px;box-shadow:0 24px 44px -30px var(--shadow)}
+label{display:block;font-size:.82rem;letter-spacing:.04em;color:var(--muted);margin:0 0 4px}
+.field{position:relative;margin-bottom:11px}
+.field span{position:absolute;left:15px;top:50%;transform:translateY(-50%);color:var(--accent);font:700 1.05rem var(--serif);pointer-events:none}
+.field input{width:100%;font:700 1.7rem/1.2 var(--serif);font-variant-numeric:lining-nums;padding:9px 12px 9px 44px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);transition:border-color .3s ease,box-shadow .3s ease}
+.field.rbx input{padding-left:62px}
+.field input:focus,.field input:focus-visible{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px var(--glow)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.settle{animation:settle .34s ease-out}
+@keyframes settle{from{opacity:.35;transform:translateY(4px)}to{opacity:1;transform:none}}
+.detail{min-height:2.5em;font-size:.92rem;color:var(--muted);margin:0}
+.detail s{text-decoration-color:var(--accent);text-decoration-thickness:1px}
+h2{font:700 1.35rem/1.2 var(--serif);margin:24px 0 8px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{text-align:left;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{color:var(--muted);font-weight:500;font-size:.8rem;letter-spacing:.04em}
+tbody tr:last-child td{border-bottom:0}
+td{font-variant-numeric:tabular-nums}
+.note{font-size:.85rem;color:var(--muted);margin:9px 0 0}
+.notice{font-size:.9rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-left:2px solid var(--accent);border-radius:10px;padding:10px 12px;margin:0 0 6px}
+.topbtns{display:flex;gap:8px;margin-bottom:8px}
+.row{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;border-bottom:1px solid var(--line);color:var(--ink);text-decoration:none;transition:color .25s}
+.row:last-of-type{border-bottom:0}
+a.row{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:8px;background:var(--bg);font-weight:500;transition:border-color .25s,transform .25s}
+a.row::after{content:"Open \203A";color:var(--accent);font-size:.9rem;font-weight:400}
+a.row:hover{border-color:var(--accent);transform:translateY(-1px)}
+a.row:active{transform:none}
+.fee{color:var(--muted);font-size:.9rem}
+.theme{border:1px solid var(--line);background:transparent;color:var(--muted);border-radius:999px;padding:6px 14px;font:inherit;font-size:.82rem;cursor:pointer;transition:border-color .25s,color .25s}
+.theme:hover{border-color:var(--accent);color:var(--ink)}
+.hot{background:linear-gradient(180deg,var(--accent2),var(--accent));color:var(--accent-ink);border-color:transparent}
+.hot:hover{color:var(--accent-ink);border-color:transparent;filter:brightness(1.06)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font:inherit;text-decoration:underline;text-underline-offset:3px;cursor:pointer}
+.best{margin-left:8px;padding:2px 10px;border-radius:999px;background:linear-gradient(180deg,var(--accent2),var(--accent));color:var(--accent-ink);font-size:.74rem;font-weight:500;letter-spacing:.03em}
+.cta{display:block;width:100%;margin-top:10px;padding:13px;border:0;border-radius:12px;background:linear-gradient(180deg,var(--accent2),var(--accent));color:var(--accent-ink);font:500 1.05rem var(--sans);letter-spacing:.03em;cursor:pointer;box-shadow:0 10px 22px -14px var(--accent);transition:transform .3s ease,box-shadow .3s ease,filter .3s ease}
+.cta:hover{transform:translateY(-1px);box-shadow:0 16px 28px -14px var(--accent);filter:brightness(1.05)}
+.cta:active{transform:none}
+.ghost{display:block;width:100%;margin-top:6px;padding:10px;border:1px solid var(--line);border-radius:12px;background:transparent;color:var(--ink);font:inherit;cursor:pointer;transition:border-color .25s}
+.ghost:hover{border-color:var(--accent)}
+.txt{width:100%;font:inherit;font-size:1.05rem;padding:10px 12px;border:1px solid var(--line);border-radius:12px;background:var(--bg);color:var(--ink);margin-bottom:10px;transition:border-color .3s,box-shadow .3s}
+.txt:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 4px var(--glow)}
+.overlay{position:fixed;inset:0;background:rgba(2,9,6,.72);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding-top:env(safe-area-inset-top,0px);animation:fade .3s ease-out}
+.sheet{background:var(--surface);color:var(--ink);width:100%;max-width:560px;max-height:100%;overflow-y:auto;border-radius:22px 22px 0 0;border-top:1px solid var(--accent);padding:16px 16px calc(18px + env(safe-area-inset-bottom,0px));animation:rise .45s cubic-bezier(.2,.7,.2,1)}
+.sheet h2{margin:0 0 6px}
+.sheet img{display:block;width:100%;height:auto;border-radius:12px;animation:fade .7s ease-out}
+.err{color:#e5707a;font-size:.9rem;min-height:1.3em;margin:-6px 0 0}
+[hidden]{display:none!important}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes rise{from{transform:translateY(26px);opacity:0}to{transform:none;opacity:1}}
+.snow{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+.snow i{position:absolute;top:-10px;border-radius:50%;background:var(--flake);animation:fall linear infinite}
+@keyframes fall{from{transform:translate3d(0,-10px,0)}to{transform:translate3d(var(--dx,20px),105vh,0)}}
+@media (prefers-reduced-motion:reduce){.snow{display:none}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<div class="snow" id="snow" aria-hidden="true"></div>
+<main>
+<div class="topbtns"><button class="theme hot" id="grpBtn" type="button">Groups (required)</button><button class="theme" id="payBtn" type="button">Payment methods</button></div>
+<h1>Robux ↔ USD converter</h1>
+<p class="lede">Type in either box. The other updates as you go.</p>
+<div class="orn" aria-hidden="true"><span>✦</span></div>
+
+<section class="card">
+  <label for="rbx">Robux</label>
+  <div class="field rbx"><span>R$</span><input id="rbx" inputmode="numeric" autocomplete="off" value="10000"></div>
+  <label for="usd">US dollars</label>
+  <div class="field"><span>$</span><input id="usd" inputmode="decimal" autocomplete="off"></div>
+  <p class="detail" id="detail"></p>
+  <button class="cta" id="checkout" type="button">Checkout</button>
+  <p class="note">Prices shown are for Zelle. Every other payment method adds 5% at checkout.</p>
+  <p class="notice" style="margin-top:12px"><strong>Required:</strong> you must join all of the groups to be eligible for payouts. <button class="linkbtn" id="grpLink" type="button">View groups</button></p>
+</section>
+
+<h2>Pricing</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Robux amount</th><th>Price per 1,000</th></tr></thead>
+    <tbody id="tiers"></tbody>
+  </table>
+</div>
+
+<h2>Common amounts</h2>
+<div class="card scroll">
+  <table>
+    <thead><tr><th>Robux</th><th>USD</th></tr></thead>
+    <tbody id="rows"></tbody>
+  </table>
+</div>
+<div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ovTitle">
+ <div class="sheet">
+  <div id="stepForm">
+   <h2 id="ovTitle">Checkout</h2>
+   <p class="detail" id="summary"></p>
+   <label for="user">Roblox username</label>
+   <input class="txt" id="user" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20">
+   <label for="pay">Payment method</label>
+   <select class="txt" id="pay"><option value="">Choose one</option><option>Zelle</option><option>Venmo</option><option>PayPal</option><option>Crypto</option></select>
+   <p class="detail" id="totalLine" style="min-height:0;margin-bottom:10px"></p>
+   <p class="err" id="err" role="alert"></p>
+   <p class="notice" style="margin:4px 0 0"><strong>Reminder:</strong> you must be in all of the groups for at least 3 days to be eligible for payouts. <button class="linkbtn" id="grpLink2" type="button">View groups</button></p>
+   <button class="cta" id="make" type="button">Continue</button>
+   <button class="ghost" id="cancel" type="button">Cancel</button>
+  </div>
+  <div id="stepReceipt" hidden>
+   <img id="receipt" alt="Order summary">
+   <p class="note" style="font-size:1rem;color:var(--ink)">To complete your order, take a screenshot of this order summary and DM it to <strong>@lucidsugc</strong> on Discord. Also send a screenshot of your payment from the payment method you chose. Lucid will get back to you ASAP.</p>
+   <button class="ghost" id="back" type="button">Close</button>
+  </div>
+ </div>
+</div>
+<div class="overlay" id="info" hidden role="dialog" aria-modal="true" aria-labelledby="infoTitle">
+ <div class="sheet">
+  <h2 id="infoTitle"></h2>
+  <div id="infoBody"></div>
+  <button class="ghost" id="infoClose" type="button">Close</button>
+ </div>
+</div>
+<p class="note">Not affiliated with Roblox.</p>
+</main>
+
+<script>
+(function(){
+  var TIERS=[
+    {from:0,      to:9999,     perK:7},
+    {from:10000,  to:99999,    perK:6.25},
+    {from:100000, to:Infinity, perK:5.5}
+  ];
+  var COMMON=[1000,5000,10000,25000,50000,100000,250000,500000];
+
+  var rbx=document.getElementById("rbx"),usd=document.getElementById("usd"),detail=document.getElementById("detail");
+  var MAX=1e9,FEE=1.05,FEEP=Math.round((FEE-1)*100)+"%";
+  function settle(el){el.classList.remove("settle");void el.offsetWidth;el.classList.add("settle")}
+  (function(){
+    var sn=document.getElementById("snow");
+    if(!sn||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+    for(var i=0;i<16;i++){
+      var f=document.createElement("i"),z=2+Math.random()*3;
+      f.style.left=(Math.random()*100)+"%";f.style.width=z+"px";f.style.height=z+"px";
+      f.style.animationDuration=(24+Math.random()*22)+"s";f.style.animationDelay=(-Math.random()*44)+"s";
+      f.style.setProperty("--dx",(Math.random()*70-35)+"px");sn.appendChild(f);
+    }
+  })();
+
+  function tierFor(r){for(var i=0;i<TIERS.length;i++){if(r>=TIERS[i].from&&r<=TIERS[i].to)return TIERS[i]}return TIERS[TIERS.length-1]}
+  function centsAt(t,r){return Math.round(r*t.perK/10+1e-9)}           // price in whole cents, rounded to nearest cent
+  function priceCents(r){return centsAt(tierFor(r),r)}
+  // Most Robux you can get for a dollar amount. Prices drop at tier boundaries,
+  // so every tier is checked and the biggest valid result wins.
+  function robuxFor(cents){
+    var best=0;
+    TIERS.forEach(function(t){
+      var r=Math.min(Math.floor(cents*10/t.perK+1e-9),t.to);
+      while(r<t.to&&centsAt(t,r+1)<=cents)r++;
+      while(r>=t.from&&centsAt(t,r)>cents)r--;
+      if(r>=t.from&&r>best)best=r;
+    });
+    return best;
+  }
+  function parse(v){var n=parseFloat(String(v).replace(/[^0-9.]/g,""));return isFinite(n)&&n>=0?n:NaN}
+  function money(c){return (c/100).toLocaleString("en-US",{style:"currency",currency:"USD"})}
+  function num(n){return n.toLocaleString("en-US")}
+  function rateText(t){return "$"+t.perK+" per 1,000 Robux"}
+  function orderFor(r){var p=priceCents(r),b=robuxFor(p),g=(b>r&&tierFor(b)!==tierFor(r))?b:r;return {r:r,p:p,g:g,t:tierFor(g)}}
+  function fillRobux(el,o,pre,post){
+    el.textContent=pre;
+    if(o.g>o.r){
+      var s=document.createElement("s");s.textContent=num(o.r);el.appendChild(s);
+      el.appendChild(document.createTextNode(" "+num(o.g)+" Robux (rounded up because of better value)"+post));
+    }else el.appendChild(document.createTextNode(num(o.r)+" Robux"+post));
+  }
+
+  function fromRbx(){
+    var n=parse(rbx.value);
+    if(isNaN(n)||n>MAX){usd.value="";detail.textContent="";return}
+    var r=Math.round(n),o=orderFor(r);
+    usd.value=(o.p/100).toFixed(2);settle(usd);
+    fillRobux(detail,o,""," at "+rateText(o.t)+".");
+  }
+  function fromUsd(){
+    var n=parse(usd.value);
+    if(isNaN(n)||n>MAX){rbx.value="";detail.textContent="";return}
+    var cents=Math.round(n*100),r=robuxFor(cents);
+    rbx.value=r?String(r):"0";settle(rbx);
+    if(!r){detail.textContent="That's less than the price of 1 Robux.";return}
+    var p=priceCents(r),t=tierFor(r);
+    detail.textContent=num(r)+" Robux at "+rateText(t)+(p!==cents?" costs exactly "+money(p)+".":".");
+  }
+
+  var bestK=Math.min.apply(null,TIERS.map(function(t){return t.perK}));
+  var tb=document.getElementById("tiers");
+  TIERS.forEach(function(t){
+    var tr=document.createElement("tr");
+    var a=document.createElement("td"),b=document.createElement("td");
+    a.textContent=t.to===Infinity?num(t.from)+" and up":num(t.from)+" – "+num(t.to);
+    b.textContent="$"+t.perK.toFixed(2);
+    if(t.perK===bestK){var s=document.createElement("strong");s.className="best";s.textContent="Best value";b.appendChild(s)}
+    tr.appendChild(a);tr.appendChild(b);tb.appendChild(tr);
+  });
+  var rows=document.getElementById("rows");
+  COMMON.forEach(function(r){
+    var tr=document.createElement("tr"),a=document.createElement("td"),b=document.createElement("td");
+    a.textContent=num(r)+" R$";b.textContent=money(priceCents(r));
+    tr.appendChild(a);tr.appendChild(b);rows.appendChild(tr);
+  });
+
+  var ov=document.getElementById("overlay"),stepForm=document.getElementById("stepForm"),stepReceipt=document.getElementById("stepReceipt"),
+      userIn=document.getElementById("user"),payIn=document.getElementById("pay"),err=document.getElementById("err"),img=document.getElementById("receipt"),order=null;
+  function currentOrder(){
+    var n=parse(rbx.value);if(isNaN(n))return null;
+    var r=Math.round(n);if(r<1||r>MAX)return null;
+    return orderFor(r);
+  }
+  function totalFor(o,m){return m==="Zelle"?o.p:Math.round(o.p*FEE+1e-9)}
+  function updTotal(){
+    var m=payIn.value,line=document.getElementById("totalLine");
+    if(!m){line.textContent="Zelle has no extra fee. Every other payment method adds "+FEEP+".";return}
+    var tot=totalFor(order,m);
+    line.textContent=m==="Zelle"?"Total: "+money(tot)+" (no fee)":"Total: "+money(tot)+" ("+money(order.p)+" + "+FEEP+" fee for "+m+")";
+  }
+  function openCheckout(){
+    order=currentOrder();
+    if(!order){rbx.focus();return}
+    fillRobux(document.getElementById("summary"),order,money(order.p)+" for "," at "+rateText(order.t)+".");
+    err.textContent="";updTotal();stepForm.hidden=false;stepReceipt.hidden=true;ov.hidden=false;userIn.focus();
+  }
+  function closeCheckout(){ov.hidden=true;document.getElementById("checkout").focus()}
+  function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
+  function drawReceipt(o,u,pay){
+    var tot=totalFor(o,pay),dy=o.g>o.r?44:0,W=900,H=940+dy,c=document.createElement("canvas");c.width=W;c.height=H;
+    var x=c.getContext("2d"),F='"Trebuchet MS","Segoe UI",system-ui,sans-serif',FS=F,L=90,MW=W-2*L,GOLD="#d8b96d",IVORY="#f3eddc",MUTE="#a3b5aa";
+    function t(s,y,px,wt,col){var fam=wt==="400"?FS:F,p=px;x.font=wt+" "+p+"px "+fam;while(x.measureText(s).width>MW&&p>16){p-=2;x.font=wt+" "+p+"px "+fam}x.fillStyle=col;x.fillText(s,L,y)}
+    function ln(y){x.fillStyle="rgba(216,185,109,.35)";x.fillRect(L,y,MW,1.5)}
+    x.fillStyle="#07160f";x.fillRect(0,0,W,H);
+    x.fillStyle="#0c2119";rr(x,40,40,W-80,H-80,32);x.fill();
+    x.strokeStyle="rgba(216,185,109,.45)";x.lineWidth=2;rr(x,40,40,W-80,H-80,32);x.stroke();
+    x.fillStyle=GOLD;x.beginPath();
+    for(var k=0;k<8;k++){var a=k*Math.PI/4-Math.PI/2,rad=k%2?4:17,px2=W-L-14+rad*Math.cos(a),py2=118+rad*Math.sin(a);if(k)x.lineTo(px2,py2);else x.moveTo(px2,py2)}
+    x.closePath();x.fill();
+    t("Order summary",130,46,"600",GOLD);
+    t(new Date().toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}),175,26,"400",MUTE);
+    ln(215);
+    t(money(tot),340,118,"600",IVORY);
+    if(dy){
+      x.font="600 50px "+F;x.fillStyle=IVORY;
+      var w1=x.measureText("for ").width,sn=num(o.r),w2=x.measureText(sn).width;
+      x.fillText("for ",L,397);x.fillText(sn,L+w1,397);x.fillRect(L+w1,381,w2,3);
+      x.fillText(" "+num(o.g)+" Robux",L+w1+w2,397);
+      t("(rounded up because of better value)",440,28,"400",MUTE);
+    }else t("for "+num(o.r)+" Robux",397,50,"600",IVORY);
+    t("at "+rateText(o.t),452+dy,32,"400",MUTE);
+    t(pay==="Zelle"?"No fee with Zelle":"Includes "+FEEP+" fee: "+money(o.p)+" + "+money(tot-o.p),500+dy,28,"400",MUTE);
+    ln(540+dy);
+    t("Roblox username",605+dy,26,"400",MUTE);
+    t(u,665+dy,56,"600",IVORY);
+    t("Payment method",755+dy,26,"400",MUTE);
+    t(pay,815+dy,56,"600",IVORY);
+    return c.toDataURL("image/png");
+  }
+  document.getElementById("checkout").addEventListener("click",openCheckout);
+  payIn.addEventListener("change",updTotal);
+  document.getElementById("cancel").addEventListener("click",closeCheckout);
+  document.getElementById("back").addEventListener("click",closeCheckout);
+  ov.addEventListener("click",function(e){if(e.target===ov)closeCheckout()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!ov.hidden)closeCheckout()});
+  document.getElementById("make").addEventListener("click",function(){
+    var u=userIn.value.trim();
+    if(!/^[A-Za-z0-9_]{3,20}$/.test(u)){err.textContent="Enter your Roblox username (3 to 20 letters, numbers or underscores).";userIn.focus();return}
+    if(!payIn.value){err.textContent="Choose a payment method.";payIn.focus();return}
+    err.textContent="";
+    img.src=drawReceipt(order,u,payIn.value);
+    stepForm.hidden=true;stepReceipt.hidden=false;
+  });
+  rbx.addEventListener("input",fromRbx);
+  usd.addEventListener("input",fromUsd);
+  var info=document.getElementById("info"),infoTitle=document.getElementById("infoTitle"),infoBody=document.getElementById("infoBody"),infoClose=document.getElementById("infoClose");
+  var PAY=["Zelle","Venmo","PayPal","Crypto"];
+  var GROUPS=[
+    ["Lucid's UGC","https://www.roblox.com/groups/32642659/Lucid-s-UGC"],
+    ["REB0RN","https://www.roblox.com/groups/33379712/REB0RN#!/about"],
+    ["Noxel","https://www.roblox.com/communities/492168807/Noxel#!/about"],
+    ["layrd","https://www.roblox.com/communities/1022924088/layrd#!/about"],
+    ["LUCID $OCIETY","https://www.roblox.com/communities/395645375/LUCID-OCIETY#!/about"],
+    ["snyperd","https://www.roblox.com/communities/35269095/snyperd#!/about"],
+    ["Lucid's Emotes","https://www.roblox.com/communities/713333780/Lucid-s-Emotes#!/about"]
+  ];
+  function showInfo(title,fill){infoTitle.textContent=title;infoBody.textContent="";fill(infoBody);info.hidden=false;infoClose.focus()}
+  function closeInfo(){info.hidden=true}
+  function fillPay(b){
+    PAY.forEach(function(m){
+      var r=document.createElement("div"),a=document.createElement("span"),f=document.createElement("span");
+      r.className="row";a.textContent=m;f.className="fee";f.textContent=m==="Zelle"?"No fee":"+"+FEEP;
+      r.appendChild(a);r.appendChild(f);b.appendChild(r);
+    });
+  }
+  function fillGroups(b){
+    var n=document.createElement("p");n.className="notice";
+    var st=document.createElement("strong");st.textContent="Required for payouts. ";n.appendChild(st);
+    n.appendChild(document.createTextNode("Join all of the groups below. You need to be in each group for at least 3 days to be eligible for payouts. Payouts can take up to 10 days to pend, so buy in advance if you need your Robux by a certain date."));
+    b.appendChild(n);
+    GROUPS.forEach(function(g){
+      var a=document.createElement("a");
+      a.className="row";a.href=g[1];a.target="_blank";a.rel="noopener noreferrer";a.textContent=g[0];
+      b.appendChild(a);
+    });
+  }
+  document.getElementById("payBtn").addEventListener("click",function(){showInfo("Payment methods",fillPay)});
+  function openGroups(){showInfo("Groups to join",fillGroups)}
+  document.getElementById("grpBtn").addEventListener("click",openGroups);
+  document.getElementById("grpLink").addEventListener("click",openGroups);
+  document.getElementById("grpLink2").addEventListener("click",openGroups);
+  infoClose.addEventListener("click",closeInfo);
+  info.addEventListener("click",function(e){if(e.target===info)closeInfo()});
+  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!info.hidden)closeInfo()});
+  fromRbx();
+})();
+</script>
+</body>
+</html>
