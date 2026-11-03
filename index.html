@@ -418,6 +418,7 @@ a.row:active{transform:none}
     $("orderLine").textContent="Order ID: "+id+(dn?" (Discord: "+dn+")":"");
     lastUser=u;stepForm.hidden=true;stepReceipt.hidden=false;
   }
+  var PAY_NAME={Zelle:"LUCIDSUGC DESIGNS, LLC",Venmo:"LUCIDSUGC Designs, LLC",PayPal:"Lucidsugc Designs LLC"};
   var PAY_INFO={Zelle:"4046948137",Venmo:"@lucidsugc",PayPal:"@lucidsugcllc",Crypto:"see the #crypto-wallets channel in Lucid's Market on Discord"};
   var stepPay=$("stepPay"),shotIn=$("shot"),shotPrev=$("shotPrev"),placeBtn=$("place"),err2=$("err2"),shotBlob=null,pend=null;
   function fail2(m){err2.textContent=m}
@@ -431,7 +432,7 @@ a.row:active{transform:none}
     pend={u:u,di:di};
     $("payLine").textContent="Send "+money(totalFor(order.p,method))+" with "+method+", then attach a screenshot of the payment below.";
     var pi=$("payInfo"),inf=PAY_INFO[method];
-    if(inf){pi.textContent="Send to: "+inf+(method==="Crypto"?".":". The name on the payment should be lucidsugc or Riad Muallem.");pi.hidden=false}else pi.hidden=true;
+    if(inf){pi.textContent="Send to: "+inf+(PAY_NAME[method]?". The recipient name that shows up should be "+PAY_NAME[method]+".":".");pi.hidden=false}else pi.hidden=true;
     shotIn.value="";shotBlob=null;shotPrev.hidden=true;placeBtn.disabled=true;placeBtn.textContent="Place order";err2.textContent="";
     stepForm.hidden=true;stepPay.hidden=false;
   });
@@ -498,7 +499,7 @@ a.row:active{transform:none}
   function fillPay(b){
     METHODS.forEach(function(m){
       var r=document.createElement("div"),a=document.createElement("span"),f=document.createElement("span");
-      r.className="row";a.textContent=m+(PAY_INFO[m]?" ("+PAY_INFO[m]+")":"");f.className="fee";f.textContent=feeOn(m)?"+"+FEEP:"No fee";
+      r.className="row";a.textContent=m+(PAY_INFO[m]?" ("+PAY_INFO[m]+(PAY_NAME[m]?", shows as "+PAY_NAME[m]:"")+")":"");f.className="fee";f.textContent=feeOn(m)?"+"+FEEP:"No fee";
       r.appendChild(a);r.appendChild(f);b.appendChild(r);
     });
   }
