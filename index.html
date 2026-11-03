@@ -75,24 +75,38 @@ a.row:active{transform:none}
 .snow i{position:absolute;top:-10px;border-radius:50%;background:var(--flake);animation:fall linear infinite}
 @keyframes fall{from{transform:translate3d(0,-10px,0)}to{transform:translate3d(var(--dx,20px),105vh,0)}}
 @media (prefers-reduced-motion:reduce){.snow{display:none}*,*::before,*::after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+.topbtns{flex-wrap:wrap}
+.agree{display:flex;gap:10px;align-items:flex-start;margin:12px 0 0;font-size:.92rem;color:var(--ink);letter-spacing:0}
+.agree input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.rules{margin:4px 0 0}
+.rules ul{margin:6px 0 0;padding-left:18px}
+.rules li{margin:5px 0}
+.help{margin:-4px 0 12px;font-size:.88rem;color:var(--muted)}
+.help summary{cursor:pointer;color:var(--accent)}
+.help ol{margin:8px 0 0;padding-left:20px}
+.steps{padding-left:20px;margin:14px 0 0;font-size:.92rem}
+.steps li{margin:6px 0}
+.hp{position:absolute;left:-9999px;width:1px;height:1px;opacity:0}
 </style>
 </head>
 <body>
 <div class="snow" id="snow" aria-hidden="true"></div>
 <main>
-<div class="topbtns"><button class="theme hot" id="grpBtn" type="button">Groups (required)</button><button class="theme" id="payBtn" type="button">Payment methods</button></div>
+<div class="topbtns"><button class="theme hot" id="grpBtn" type="button">Groups (required)</button><button class="theme" id="payBtn" type="button">Payment methods</button><button class="theme" id="vouchBtn" type="button">Vouch</button></div>
 <h1>Robux ↔ USD converter</h1>
 <p class="lede">Type in either box. The other updates as you go.</p>
 <div class="orn" aria-hidden="true"><span>✦</span></div>
 
 <section class="card">
+  <label for="method">Paying with</label>
+  <select class="txt" id="method"></select>
   <label for="rbx">Robux</label>
   <div class="field rbx"><span>R$</span><input id="rbx" inputmode="numeric" autocomplete="off" value="10000"></div>
   <label for="usd">US dollars</label>
   <div class="field"><span>$</span><input id="usd" inputmode="decimal" autocomplete="off"></div>
   <p class="detail" id="detail"></p>
   <button class="cta" id="checkout" type="button">Checkout</button>
-  <p class="note">Prices shown are for Zelle. Every other payment method adds 5% at checkout.</p>
+  <p class="note">Zelle has no fee. Every other payment method adds 5%.</p>
   <p class="notice" style="margin-top:12px"><strong>Required:</strong> you must join all of the groups to be eligible for payouts. <button class="linkbtn" id="grpLink" type="button">View groups</button></p>
 </section>
 
@@ -111,6 +125,7 @@ a.row:active{transform:none}
     <tbody id="rows"></tbody>
   </table>
 </div>
+
 <div class="overlay" id="overlay" hidden role="dialog" aria-modal="true" aria-labelledby="ovTitle">
  <div class="sheet">
   <div id="stepForm">
@@ -118,21 +133,48 @@ a.row:active{transform:none}
    <p class="detail" id="summary"></p>
    <label for="user">Roblox username</label>
    <input class="txt" id="user" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20">
+   <label for="dId">Discord user ID</label>
+   <input class="txt" id="dId" inputmode="numeric" autocomplete="off" maxlength="20">
+   <details class="help"><summary>How do I find my Discord user ID?</summary>
+    <ol>
+     <li>Open Discord and tap your profile picture to open <b>User Settings</b>.</li>
+     <li>Tap <b>Advanced</b> and turn on <b>Developer Mode</b>.</li>
+     <li>Go back and tap your profile picture again, then tap the <b>...</b> menu and choose <b>Copy User ID</b>.</li>
+     <li>Paste it in the box above. It is a long number, 17 to 20 digits.</li>
+    </ol>
+   </details>
    <label for="pay">Payment method</label>
-   <select class="txt" id="pay"><option value="">Choose one</option><option>Zelle</option><option>Venmo</option><option>PayPal</option><option>Crypto</option></select>
+   <select class="txt" id="pay"></select>
    <p class="detail" id="totalLine" style="min-height:0;margin-bottom:10px"></p>
+   <div class="notice rules"><strong>Before you order</strong>
+    <ul>
+     <li>Never resell Robux you buy here. If you are caught reselling, your payment will not be refunded.</li>
+     <li>Never dispute a charge with your bank or payment app.</li>
+     <li>You must be in all of the groups for at least 3 days to be eligible for payouts. If you are not eligible when you pay, DM @lucidsugc 3 days later and Lucid will pay you out. <button class="linkbtn" id="grpLink2" type="button">View groups</button></li>
+    </ul>
+   </div>
+   <label class="agree"><input type="checkbox" id="agree"><span>I agree to these rules.</span></label>
+   <input class="hp" id="hp" tabindex="-1" autocomplete="off" aria-hidden="true">
    <p class="err" id="err" role="alert"></p>
-   <p class="notice" style="margin:4px 0 0"><strong>Reminder:</strong> you must be in all of the groups for at least 3 days to be eligible for payouts. <button class="linkbtn" id="grpLink2" type="button">View groups</button></p>
-   <button class="cta" id="make" type="button">Continue</button>
+   <button class="cta" id="make" type="button">Place order</button>
    <button class="ghost" id="cancel" type="button">Cancel</button>
   </div>
   <div id="stepReceipt" hidden>
+   <h2>Order placed</h2>
+   <p class="detail" id="orderLine" style="min-height:0;margin-bottom:10px"></p>
    <img id="receipt" alt="Order summary">
-   <p class="note" style="font-size:1rem;color:var(--ink)">To complete your order, take a screenshot of this order summary and DM it to <strong>@lucidsugc</strong> on Discord. Also send a screenshot of your payment from the payment method you chose. Lucid will get back to you ASAP.</p>
+   <ol class="steps">
+    <li>Pay with the method you chose, then DM @lucidsugc on Discord with a screenshot of your payment and your Order ID. Lucid will get back to you ASAP.</li>
+    <li>Once your payout is complete, please vouch in the vouches channel of Lucid's Market on Discord. The Vouch button at the top makes a vouch image for you.</li>
+    <li>If you were not eligible in the groups when you paid, DM @lucidsugc 3 days later and Lucid will pay you out.</li>
+   </ol>
+   <button class="cta" id="dl" type="button">Download image</button>
+   <p class="note">If nothing downloads, press and hold the image to save it, or take a screenshot.</p>
    <button class="ghost" id="back" type="button">Close</button>
   </div>
  </div>
 </div>
+
 <div class="overlay" id="info" hidden role="dialog" aria-modal="true" aria-labelledby="infoTitle">
  <div class="sheet">
   <h2 id="infoTitle"></h2>
@@ -140,23 +182,45 @@ a.row:active{transform:none}
   <button class="ghost" id="infoClose" type="button">Close</button>
  </div>
 </div>
+
+<div class="overlay" id="vouch" hidden role="dialog" aria-modal="true" aria-labelledby="vTitle">
+ <div class="sheet">
+  <h2 id="vTitle">Vouch image</h2>
+  <p class="detail" style="min-height:0;margin-bottom:10px">After your payout is complete, make your vouch image and post it in the vouches channel of Lucid's Market on Discord.</p>
+  <label for="vUser">Roblox username</label>
+  <input class="txt" id="vUser" autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="20">
+  <label for="vRbx">Robux received</label>
+  <input class="txt" id="vRbx" inputmode="numeric" autocomplete="off">
+  <p class="err" id="vErr" role="alert"></p>
+  <button class="cta" id="vMake" type="button">Create vouch image</button>
+  <div id="vOut" hidden>
+   <img id="vImg" alt="Vouch image" style="margin-top:14px">
+   <button class="cta" id="vDl" type="button">Download image</button>
+   <p class="note">If nothing downloads, press and hold the image to save it.</p>
+  </div>
+  <button class="ghost" id="vClose" type="button">Close</button>
+ </div>
+</div>
 <p class="note">Not affiliated with Roblox.</p>
 </main>
 
 <script>
 (function(){
+  var ORDER_API="";
+  var PREVIEW=/[?&]preview=1/.test(location.search);
   var TIERS=[
     {from:0,      to:9999,     perK:7},
     {from:10000,  to:99999,    perK:6.25},
     {from:100000, to:Infinity, perK:5.5}
   ];
   var COMMON=[1000,5000,10000,25000,50000,100000,250000,500000];
-
-  var rbx=document.getElementById("rbx"),usd=document.getElementById("usd"),detail=document.getElementById("detail");
-  var MAX=1e9,FEE=1.05,FEEP=Math.round((FEE-1)*100)+"%";
+  var MAX=1e7,FEE=1.05,FEEP=Math.round((FEE-1)*100)+"%";
+  var METHODS=["Zelle","Venmo","PayPal","Crypto"];
+  var method="Zelle",last="rbx",order=null,lastUser="";
+  function $(id){return document.getElementById(id)}
   function settle(el){el.classList.remove("settle");void el.offsetWidth;el.classList.add("settle")}
   (function(){
-    var sn=document.getElementById("snow");
+    var sn=$("snow");
     if(!sn||matchMedia("(prefers-reduced-motion: reduce)").matches)return;
     for(var i=0;i<16;i++){
       var f=document.createElement("i"),z=2+Math.random()*3;
@@ -166,11 +230,17 @@ a.row:active{transform:none}
     }
   })();
 
+  var rbx=$("rbx"),usd=$("usd"),detail=$("detail"),methodSel=$("method"),rows=$("rows"),
+      ov=$("overlay"),stepForm=$("stepForm"),stepReceipt=$("stepReceipt"),userIn=$("user"),dId=$("dId"),
+      payIn=$("pay"),agree=$("agree"),err=$("err"),img=$("receipt"),make=$("make");
+
+  function parse(v){var n=parseFloat(String(v).replace(/[^0-9.]/g,""));return isFinite(n)&&n>=0?n:NaN}
+  function money(c){return (c/100).toLocaleString("en-US",{style:"currency",currency:"USD"})}
+  function num(n){return n.toLocaleString("en-US")}
+  function rateText(t){return "$"+t.perK+" per 1,000 Robux"}
   function tierFor(r){for(var i=0;i<TIERS.length;i++){if(r>=TIERS[i].from&&r<=TIERS[i].to)return TIERS[i]}return TIERS[TIERS.length-1]}
-  function centsAt(t,r){return Math.round(r*t.perK/10+1e-9)}           // price in whole cents, rounded to nearest cent
+  function centsAt(t,r){return Math.round(r*t.perK/10+1e-9)}
   function priceCents(r){return centsAt(tierFor(r),r)}
-  // Most Robux you can get for a dollar amount. Prices drop at tier boundaries,
-  // so every tier is checked and the biggest valid result wins.
   function robuxFor(cents){
     var best=0;
     TIERS.forEach(function(t){
@@ -181,10 +251,6 @@ a.row:active{transform:none}
     });
     return best;
   }
-  function parse(v){var n=parseFloat(String(v).replace(/[^0-9.]/g,""));return isFinite(n)&&n>=0?n:NaN}
-  function money(c){return (c/100).toLocaleString("en-US",{style:"currency",currency:"USD"})}
-  function num(n){return n.toLocaleString("en-US")}
-  function rateText(t){return "$"+t.perK+" per 1,000 Robux"}
   function orderFor(r){var p=priceCents(r),b=robuxFor(p),g=(b>r&&tierFor(b)!==tierFor(r))?b:r;return {r:r,p:p,g:g,t:tierFor(g)}}
   function fillRobux(el,o,pre,post){
     el.textContent=pre;
@@ -193,67 +259,95 @@ a.row:active{transform:none}
       el.appendChild(document.createTextNode(" "+num(o.g)+" Robux (rounded up because of better value)"+post));
     }else el.appendChild(document.createTextNode(num(o.r)+" Robux"+post));
   }
+  function feeOn(m){return m!=="Zelle"}
+  function totalFor(p,m){return feeOn(m)?Math.round(p*FEE+1e-9):p}
+  function netFor(cents,m){
+    if(!feeOn(m))return cents;
+    var n=Math.floor(cents/FEE+1e-9);
+    while(totalFor(n+1,m)<=cents)n++;
+    while(n>0&&totalFor(n,m)>cents)n--;
+    return n;
+  }
+  function tail(o){return " at "+rateText(o.t)+(feeOn(method)?" plus the "+FEEP+" fee":"")+"."}
 
   function fromRbx(){
+    last="rbx";
     var n=parse(rbx.value);
     if(isNaN(n)||n>MAX){usd.value="";detail.textContent="";return}
     var r=Math.round(n),o=orderFor(r);
-    usd.value=(o.p/100).toFixed(2);settle(usd);
-    fillRobux(detail,o,""," at "+rateText(o.t)+".");
+    usd.value=(totalFor(o.p,method)/100).toFixed(2);settle(usd);
+    fillRobux(detail,o,"",tail(o));
   }
   function fromUsd(){
+    last="usd";
     var n=parse(usd.value);
     if(isNaN(n)||n>MAX){rbx.value="";detail.textContent="";return}
-    var cents=Math.round(n*100),r=robuxFor(cents);
+    var cents=Math.round(n*100),r=Math.min(robuxFor(netFor(cents,method)),MAX);
     rbx.value=r?String(r):"0";settle(rbx);
     if(!r){detail.textContent="That's less than the price of 1 Robux.";return}
-    var p=priceCents(r),t=tierFor(r);
-    detail.textContent=num(r)+" Robux at "+rateText(t)+(p!==cents?" costs exactly "+money(p)+".":".");
+    var o=orderFor(r),t=totalFor(o.p,method);
+    fillRobux(detail,o,"",tail(o).replace(/\.$/,"")+(t!==cents?". Costs exactly "+money(t)+".":"."));
   }
+  function buildRows(){
+    rows.textContent="";
+    COMMON.forEach(function(r){
+      var tr=document.createElement("tr"),a=document.createElement("td"),b=document.createElement("td");
+      a.textContent=num(r)+" R$";b.textContent=money(totalFor(priceCents(r),method));
+      tr.appendChild(a);tr.appendChild(b);rows.appendChild(tr);
+    });
+  }
+  function recompute(){if(last==="usd")fromUsd();else fromRbx();buildRows()}
 
   var bestK=Math.min.apply(null,TIERS.map(function(t){return t.perK}));
-  var tb=document.getElementById("tiers");
+  var tb=$("tiers");
   TIERS.forEach(function(t){
-    var tr=document.createElement("tr");
-    var a=document.createElement("td"),b=document.createElement("td");
-    a.textContent=t.to===Infinity?num(t.from)+" and up":num(t.from)+" – "+num(t.to);
+    var tr=document.createElement("tr"),a=document.createElement("td"),b=document.createElement("td");
+    a.textContent=t.to===Infinity?num(t.from)+" and up":num(t.from)+" - "+num(t.to);
     b.textContent="$"+t.perK.toFixed(2);
     if(t.perK===bestK){var s=document.createElement("strong");s.className="best";s.textContent="Best value";b.appendChild(s)}
     tr.appendChild(a);tr.appendChild(b);tb.appendChild(tr);
   });
-  var rows=document.getElementById("rows");
-  COMMON.forEach(function(r){
-    var tr=document.createElement("tr"),a=document.createElement("td"),b=document.createElement("td");
-    a.textContent=num(r)+" R$";b.textContent=money(priceCents(r));
-    tr.appendChild(a);tr.appendChild(b);rows.appendChild(tr);
-  });
 
-  var ov=document.getElementById("overlay"),stepForm=document.getElementById("stepForm"),stepReceipt=document.getElementById("stepReceipt"),
-      userIn=document.getElementById("user"),payIn=document.getElementById("pay"),err=document.getElementById("err"),img=document.getElementById("receipt"),order=null;
+  function fillMethods(sel){
+    METHODS.forEach(function(m){
+      var o=document.createElement("option");
+      o.value=m;o.textContent=m+(feeOn(m)?" (+"+FEEP+")":" (no fee)");sel.appendChild(o);
+    });
+  }
+  fillMethods(methodSel);fillMethods(payIn);
+
   function currentOrder(){
     var n=parse(rbx.value);if(isNaN(n))return null;
     var r=Math.round(n);if(r<1||r>MAX)return null;
     return orderFor(r);
   }
-  function totalFor(o,m){return m==="Zelle"?o.p:Math.round(o.p*FEE+1e-9)}
   function updTotal(){
-    var m=payIn.value,line=document.getElementById("totalLine");
-    if(!m){line.textContent="Zelle has no extra fee. Every other payment method adds "+FEEP+".";return}
-    var tot=totalFor(order,m);
-    line.textContent=m==="Zelle"?"Total: "+money(tot)+" (no fee)":"Total: "+money(tot)+" ("+money(order.p)+" + "+FEEP+" fee for "+m+")";
+    var tot=totalFor(order.p,method),line=$("totalLine");
+    line.textContent=feeOn(method)?"Total: "+money(tot)+" ("+money(order.p)+" + "+FEEP+" fee for "+method+")":"Total: "+money(tot)+" (no fee)";
+  }
+  function refreshCheckout(){
+    order=currentOrder();
+    if(!order){closeCheckout();return}
+    fillRobux($("summary"),order,money(totalFor(order.p,method))+" for ",tail(order));
+    updTotal();
   }
   function openCheckout(){
-    order=currentOrder();
-    if(!order){rbx.focus();return}
-    fillRobux(document.getElementById("summary"),order,money(order.p)+" for "," at "+rateText(order.t)+".");
-    err.textContent="";updTotal();stepForm.hidden=false;stepReceipt.hidden=true;ov.hidden=false;userIn.focus();
+    if(!currentOrder()){rbx.focus();return}
+    err.textContent="";payIn.value=method;stepForm.hidden=false;stepReceipt.hidden=true;make.disabled=false;make.textContent="Place order";
+    refreshCheckout();ov.hidden=false;userIn.focus();
   }
-  function closeCheckout(){ov.hidden=true;document.getElementById("checkout").focus()}
+  function closeCheckout(){ov.hidden=true;$("checkout").focus()}
+  function setMethod(m){
+    method=m;methodSel.value=m;payIn.value=m;recompute();
+    if(!ov.hidden&&!stepForm.hidden)refreshCheckout();
+  }
+
   function rr(x,a,b,w,h,r){x.beginPath();x.moveTo(a+r,b);x.arcTo(a+w,b,a+w,b+h,r);x.arcTo(a+w,b+h,a,b+h,r);x.arcTo(a,b+h,a,b,r);x.arcTo(a,b,a+w,b,r);x.closePath()}
-  function drawReceipt(o,u,pay){
-    var tot=totalFor(o,pay),dy=o.g>o.r?44:0,W=900,H=940+dy,c=document.createElement("canvas");c.width=W;c.height=H;
-    var x=c.getContext("2d"),F='"Trebuchet MS","Segoe UI",system-ui,sans-serif',FS=F,L=90,MW=W-2*L,GOLD="#d8b96d",IVORY="#f3eddc",MUTE="#a3b5aa";
-    function t(s,y,px,wt,col){var fam=wt==="400"?FS:F,p=px;x.font=wt+" "+p+"px "+fam;while(x.measureText(s).width>MW&&p>16){p-=2;x.font=wt+" "+p+"px "+fam}x.fillStyle=col;x.fillText(s,L,y)}
+  var F='"Trebuchet MS","Segoe UI",system-ui,sans-serif',GOLD="#d8b96d",IVORY="#f3eddc",MUTE="#a3b5aa";
+  function drawReceipt(o,u,pay,id){
+    var tot=totalFor(o.p,pay),dy=o.g>o.r?44:0,W=900,H=940+dy,c=document.createElement("canvas");c.width=W;c.height=H;
+    var x=c.getContext("2d"),L=90,MW=W-2*L;
+    function t(s,y,px,wt,col){var p=px;x.font=wt+" "+p+"px "+F;while(x.measureText(s).width>MW&&p>16){p-=2;x.font=wt+" "+p+"px "+F}x.fillStyle=col;x.fillText(s,L,y)}
     function ln(y){x.fillStyle="rgba(216,185,109,.35)";x.fillRect(L,y,MW,1.5)}
     x.fillStyle="#07160f";x.fillRect(0,0,W,H);
     x.fillStyle="#0c2119";rr(x,40,40,W-80,H-80,32);x.fill();
@@ -261,44 +355,83 @@ a.row:active{transform:none}
     x.fillStyle=GOLD;x.beginPath();
     for(var k=0;k<8;k++){var a=k*Math.PI/4-Math.PI/2,rad=k%2?4:17,px2=W-L-14+rad*Math.cos(a),py2=118+rad*Math.sin(a);if(k)x.lineTo(px2,py2);else x.moveTo(px2,py2)}
     x.closePath();x.fill();
-    t("Order summary",130,46,"600",GOLD);
-    t(new Date().toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}),175,26,"400",MUTE);
+    t("Order summary",130,46,"700",GOLD);
+    t("Order "+id+" - "+new Date().toLocaleString("en-US",{dateStyle:"medium",timeStyle:"short"}),175,26,"400",MUTE);
     ln(215);
-    t(money(tot),340,118,"600",IVORY);
+    t(money(tot),340,118,"700",IVORY);
     if(dy){
-      x.font="600 50px "+F;x.fillStyle=IVORY;
+      x.font="700 50px "+F;x.fillStyle=IVORY;
       var w1=x.measureText("for ").width,sn=num(o.r),w2=x.measureText(sn).width;
       x.fillText("for ",L,397);x.fillText(sn,L+w1,397);x.fillRect(L+w1,381,w2,3);
       x.fillText(" "+num(o.g)+" Robux",L+w1+w2,397);
       t("(rounded up because of better value)",440,28,"400",MUTE);
-    }else t("for "+num(o.r)+" Robux",397,50,"600",IVORY);
+    }else t("for "+num(o.r)+" Robux",397,50,"700",IVORY);
     t("at "+rateText(o.t),452+dy,32,"400",MUTE);
-    t(pay==="Zelle"?"No fee with Zelle":"Includes "+FEEP+" fee: "+money(o.p)+" + "+money(tot-o.p),500+dy,28,"400",MUTE);
+    t(feeOn(pay)?"Includes "+FEEP+" fee: "+money(o.p)+" + "+money(tot-o.p):"No fee with Zelle",500+dy,28,"400",MUTE);
     ln(540+dy);
     t("Roblox username",605+dy,26,"400",MUTE);
-    t(u,665+dy,56,"600",IVORY);
+    t(u,665+dy,56,"700",IVORY);
     t("Payment method",755+dy,26,"400",MUTE);
-    t(pay,815+dy,56,"600",IVORY);
+    t(pay,815+dy,56,"700",IVORY);
     return c.toDataURL("image/png");
   }
-  document.getElementById("checkout").addEventListener("click",openCheckout);
-  payIn.addEventListener("change",updTotal);
-  document.getElementById("cancel").addEventListener("click",closeCheckout);
-  document.getElementById("back").addEventListener("click",closeCheckout);
-  ov.addEventListener("click",function(e){if(e.target===ov)closeCheckout()});
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!ov.hidden)closeCheckout()});
-  document.getElementById("make").addEventListener("click",function(){
-    var u=userIn.value.trim();
-    if(!/^[A-Za-z0-9_]{3,20}$/.test(u)){err.textContent="Enter your Roblox username (3 to 20 letters, numbers or underscores).";userIn.focus();return}
-    if(!payIn.value){err.textContent="Choose a payment method.";payIn.focus();return}
+  function star5(x,cx,cy,R){x.beginPath();for(var k=0;k<10;k++){var a=k*Math.PI/5-Math.PI/2,rad=k%2?R*0.45:R,px=cx+rad*Math.cos(a),py=cy+rad*Math.sin(a);if(k)x.lineTo(px,py);else x.moveTo(px,py)}x.closePath();x.fill()}
+  function drawVouch(u,r){
+    var W=900,H=780,c=document.createElement("canvas");c.width=W;c.height=H;
+    var x=c.getContext("2d"),MW=W-180;
+    function tc(s,y,px,wt,col){var p=px;x.font=wt+" "+p+"px "+F;while(x.measureText(s).width>MW&&p>16){p-=2;x.font=wt+" "+p+"px "+F}x.fillStyle=col;x.textAlign="center";x.fillText(s,W/2,y)}
+    x.fillStyle="#07160f";x.fillRect(0,0,W,H);
+    x.fillStyle="#0c2119";rr(x,40,40,W-80,H-80,32);x.fill();
+    x.strokeStyle="rgba(216,185,109,.45)";x.lineWidth=2;rr(x,40,40,W-80,H-80,32);x.stroke();
+    tc("Vouch",150,50,"700",GOLD);
+    x.fillStyle=GOLD;for(var i=0;i<5;i++)star5(x,W/2+(i-2)*72,215,26);
+    tc(u,350,64,"700",IVORY);
+    tc("received",405,30,"400",MUTE);
+    tc(num(r)+" Robux",505,96,"700",IVORY);
+    x.fillStyle="rgba(216,185,109,.35)";x.fillRect(90,560,W-180,1.5);
+    tc("Payout complete",625,34,"700",GOLD);
+    tc("Lucid's UGC",675,28,"400",MUTE);
+    tc(new Date().toLocaleDateString("en-US",{dateStyle:"medium"}),715,24,"400",MUTE);
+    x.textAlign="left";
+    return c.toDataURL("image/png");
+  }
+  function download(src,name){
+    try{var a=document.createElement("a");a.href=src;a.download=name;document.body.appendChild(a);a.click();a.remove()}catch(e){}
+  }
+
+  var NAME=/^[A-Za-z0-9_]{3,20}$/,DID=/^\d{17,20}$/,lastId="";
+  function fail(msg,el){err.textContent=msg;el.focus()}
+  function showReceipt(id,u,dn){
+    img.src=drawReceipt(order,u,method,id);lastId=id;
+    $("orderLine").textContent="Order ID: "+id+(dn?" (Discord: "+dn+")":"");
+    lastUser=u;stepForm.hidden=true;stepReceipt.hidden=false;
+  }
+  make.addEventListener("click",function(){
+    var u=userIn.value.trim(),di=dId.value.trim();
+    if(!NAME.test(u)){fail("Enter your Roblox username (3 to 20 letters, numbers or underscores).",userIn);return}
+    if(!DID.test(di)){fail("Enter your Discord user ID (17 to 20 digits). The help under the box shows how to find it.",dId);return}
+    if(!agree.checked){fail("Please tick the box to agree to the rules.",agree);return}
+    if(!order){fail("Enter an amount first.",rbx);return}
     err.textContent="";
-    img.src=drawReceipt(order,u,payIn.value);
-    stepForm.hidden=true;stepReceipt.hidden=false;
+    if(PREVIEW){showReceipt("PREVIEW",u);return}
+    if(!ORDER_API){err.textContent="Ordering isn't switched on yet. Please DM @lucidsugc on Discord to order.";return}
+    make.disabled=true;make.textContent="Placing order...";
+    fetch(ORDER_API.replace(/\/$/,"")+"/order",{
+      method:"POST",headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({robux:order.r,method:method,roblox:u,discordId:di,clientTotal:totalFor(order.p,method),website:$("hp").value})
+    }).then(function(res){
+      return res.json().catch(function(){return {}}).then(function(j){return {status:res.status,ok:res.ok&&j.ok,j:j}});
+    }).then(function(x){
+      if(x.ok){showReceipt(x.j.orderId,u,x.j.discordName);return}
+      throw new Error(x.status===409?"price":(x.j&&x.j.error==="discord id")?"did":"fail");
+    }).catch(function(e){
+      err.textContent=e.message==="price"?"Prices were just updated. Please refresh the page and try again.":e.message==="did"?"That Discord ID doesn't match an account. Check it and try again.":"We couldn't place your order. Please try again, or DM @lucidsugc on Discord.";
+      make.disabled=false;make.textContent="Place order";
+    });
   });
-  rbx.addEventListener("input",fromRbx);
-  usd.addEventListener("input",fromUsd);
-  var info=document.getElementById("info"),infoTitle=document.getElementById("infoTitle"),infoBody=document.getElementById("infoBody"),infoClose=document.getElementById("infoClose");
-  var PAY=["Zelle","Venmo","PayPal","Crypto"];
+  $("dl").addEventListener("click",function(){download(img.src,"order-"+lastId+".png")});
+
+  var info=$("info"),infoTitle=$("infoTitle"),infoBody=$("infoBody"),infoClose=$("infoClose"),vouch=$("vouch");
   var GROUPS=[
     ["Lucid's UGC","https://www.roblox.com/groups/32642659/Lucid-s-UGC"],
     ["REB0RN","https://www.roblox.com/groups/33379712/REB0RN#!/about"],
@@ -311,16 +444,16 @@ a.row:active{transform:none}
   function showInfo(title,fill){infoTitle.textContent=title;infoBody.textContent="";fill(infoBody);info.hidden=false;infoClose.focus()}
   function closeInfo(){info.hidden=true}
   function fillPay(b){
-    PAY.forEach(function(m){
+    METHODS.forEach(function(m){
       var r=document.createElement("div"),a=document.createElement("span"),f=document.createElement("span");
-      r.className="row";a.textContent=m;f.className="fee";f.textContent=m==="Zelle"?"No fee":"+"+FEEP;
+      r.className="row";a.textContent=m;f.className="fee";f.textContent=feeOn(m)?"+"+FEEP:"No fee";
       r.appendChild(a);r.appendChild(f);b.appendChild(r);
     });
   }
   function fillGroups(b){
     var n=document.createElement("p");n.className="notice";
     var st=document.createElement("strong");st.textContent="Required for payouts. ";n.appendChild(st);
-    n.appendChild(document.createTextNode("Join all of the groups below. You need to be in each group for at least 3 days to be eligible for payouts. Payouts can take up to 10 days to pend, so buy in advance if you need your Robux by a certain date."));
+    n.appendChild(document.createTextNode("Join all of the groups below. You need to be in each group for at least 3 days to be eligible for payouts. If you are not eligible when you pay, DM @lucidsugc 3 days later and Lucid will pay you out. Payouts can take up to 10 days to pend, so buy in advance if you need your Robux by a certain date."));
     b.appendChild(n);
     GROUPS.forEach(function(g){
       var a=document.createElement("a");
@@ -328,15 +461,44 @@ a.row:active{transform:none}
       b.appendChild(a);
     });
   }
-  document.getElementById("payBtn").addEventListener("click",function(){showInfo("Payment methods",fillPay)});
   function openGroups(){showInfo("Groups to join",fillGroups)}
-  document.getElementById("grpBtn").addEventListener("click",openGroups);
-  document.getElementById("grpLink").addEventListener("click",openGroups);
-  document.getElementById("grpLink2").addEventListener("click",openGroups);
+  $("grpBtn").addEventListener("click",openGroups);
+  $("grpLink").addEventListener("click",openGroups);
+  $("grpLink2").addEventListener("click",openGroups);
+  $("payBtn").addEventListener("click",function(){showInfo("Payment methods",fillPay)});
   infoClose.addEventListener("click",closeInfo);
   info.addEventListener("click",function(e){if(e.target===info)closeInfo()});
-  document.addEventListener("keydown",function(e){if(e.key==="Escape"&&!info.hidden)closeInfo()});
-  fromRbx();
+
+  var vUser=$("vUser"),vRbx=$("vRbx"),vErr=$("vErr");
+  function closeVouch(){vouch.hidden=true}
+  $("vouchBtn").addEventListener("click",function(){
+    if(lastUser&&!vUser.value)vUser.value=lastUser;
+    vErr.textContent="";vouch.hidden=false;vUser.focus();
+  });
+  $("vMake").addEventListener("click",function(){
+    var u=vUser.value.trim(),r=Math.round(parse(vRbx.value));
+    if(!NAME.test(u)){vErr.textContent="Enter your Roblox username.";vUser.focus();return}
+    if(!(r>=1&&r<=MAX)){vErr.textContent="Enter the amount of Robux you received.";vRbx.focus();return}
+    vErr.textContent="";
+    $("vImg").src=drawVouch(u,r);$("vOut").hidden=false;
+  });
+  $("vDl").addEventListener("click",function(){download($("vImg").src,"vouch-"+vUser.value.trim()+".png")});
+  $("vClose").addEventListener("click",closeVouch);
+  vouch.addEventListener("click",function(e){if(e.target===vouch)closeVouch()});
+
+  $("checkout").addEventListener("click",openCheckout);
+  $("cancel").addEventListener("click",closeCheckout);
+  $("back").addEventListener("click",closeCheckout);
+  ov.addEventListener("click",function(e){if(e.target===ov)closeCheckout()});
+  document.addEventListener("keydown",function(e){
+    if(e.key!=="Escape")return;
+    if(!vouch.hidden)closeVouch();else if(!info.hidden)closeInfo();else if(!ov.hidden)closeCheckout();
+  });
+  rbx.addEventListener("input",fromRbx);
+  usd.addEventListener("input",fromUsd);
+  methodSel.addEventListener("change",function(){setMethod(methodSel.value)});
+  payIn.addEventListener("change",function(){setMethod(payIn.value)});
+  recompute();
 })();
 </script>
 </body>
